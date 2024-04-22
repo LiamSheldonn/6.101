@@ -13,7 +13,6 @@ import doctest
 class Symbol:
     pass
 
-
 class Var(Symbol):
     def __init__(self, n):
         """
@@ -21,6 +20,7 @@ class Var(Symbol):
         value passed in to the initializer.
         """
         self.name = n
+        self.precedence = float('inf')
 
     def __str__(self):
         return self.name
@@ -36,6 +36,7 @@ class Num(Symbol):
         value passed in to the initializer.
         """
         self.n = n
+        self.precedence = float('inf')
 
     def __str__(self):
         return str(self.n)
@@ -43,11 +44,15 @@ class Num(Symbol):
     def __repr__(self):
         return f"Num({self.n})"
 
-class BinOp():
+def classname(val):
+    return str(val.__class__.__name__)
+
+
+class BinOp(Symbol):
     def __init__(self,left,right):
         true_vals = []
         for val in (left,right):
-            if isinstance(val, Var) or isinstance(val, Num):
+            if issubclass(val.__class__, Symbol):
                 true_vals.append(val)
             elif isinstance(val,str):
                 true_vals.append(Var(val))
@@ -55,35 +60,37 @@ class BinOp():
                 true_vals.append(Num(val))
             else:
                 raise TypeError
+        op_dict = {
+            "Add":('+',1,False),
+            "Sub":('-',1,True),
+            "Mul":('*',2,False),
+            "Div":('/',2,True)            
+        }
+        self.operator, self.precedence, self.wrap_right_at_same_precedence=op_dict[classname(self)]
         self.left, self.right = true_vals
     
-    def represent(self, operator):
-        return f"{operator}({repr(self.left)}, {repr(self.right)})"
-    def string(self, operator):
-        return f"{self.left} {operator} {self.right}"
+    def __repr__(self):
+        operation = classname(self)
+        return f"{operation}({repr(self.left)}, {repr(self.right)})"
+
+    def __str__(self):
+        if self.precedence > self.left.precedence:
+            return f"({self.left}) {self.operator} {self.right}"
+        elif self.precedence > self.right.precedence:
+            return f"{self.left} {self.operator} ({self.right})"
+        elif self.right.precedence == self.precedence and self.wrap_right_at_same_precedence:
+            return f"{self.left} {self.operator} ({self.right})"
+        else:
+            return f"{self.left} {self.operator} {self.right}"
 
 class Add(BinOp):
-    def __repr__(self):
-        return self.represent("Add")
-    def __str__(self):
-        return self.string('+')
-
+    ...
 class Sub(BinOp):
-    def __repr__(self):
-        return self.represent("Sub")
-    def __str__(self):
-        return self.string('-')
-
+    ...
 class Mul(BinOp):
-    def __repr__(self):
-        return self.represent("Mul")
-    def __str__(self):
-        return self.string('*')
+    ...
 class Div(BinOp):
-    def __repr__(self):
-        return self.represent("Div")
-    def __str__(self):
-        return self.string('/')
+    ...
 
 
 if __name__ == "__main__":
