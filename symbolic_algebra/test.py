@@ -18,24 +18,31 @@ iisinstance = isinstance
 TEST_DIRECTORY = os.path.dirname(__file__)
 
 
-def show_string_difference(str1, str2):
-    # Generate the differences using ndiff from difflib
-    diff = list(difflib.ndiff(str1, str2))
+def find_first_difference(str1, str2):
+    """
+    Finds the first position where two strings differ and returns the index and the differing characters.
     
-    # Initialize a result string to accumulate the output
-    result = []
+    Args:
+    str1 (str): The first string to compare.
+    str2 (str): The second string to compare.
     
-    # Loop through the diff output to format it nicely
-    for d in diff:
-        if d[0] == ' ':
-            continue  # Skip the elements that have not changed
-        elif d[0] == '-':
-            result.append(f"Delete '{d[2]}' from position {diff.index(d)}")
-        elif d[0] == '+':
-            result.append(f"Add '{d[2]}' to position {diff.index(d)}")
+    Returns:
+    tuple or None: A tuple containing the index and the differing characters, or None if the strings are identical.
+    """
+    min_length = min(len(str1), len(str2))
     
-    # Join the result list into a single string for clearer output
-    return '\n'.join(result)
+    for i in range(min_length):
+        if str1[i] != str2[i]:
+            return (i, str1[i], str2[i])
+    
+    if len(str1) != len(str2):
+        # Handle case where one string is longer than the other
+        char1 = str1[i + 1] if i + 1 < len(str1) else None
+        char2 = str2[i + 1] if i + 1 < len(str2) else None
+        return (i + 1, char1, char2)
+    
+    return None  # No differences found
+
 
 def symbol_rep(x):
     """
@@ -658,6 +665,7 @@ def _make_test_display_02(test=0, mangled=False):
                 safe_eval(expected[0])
             ), "Incorrect repr result!"
         else:
+            print(find_first_difference(str(exp),expected[1]))
             assert str(exp) == expected[1], "Incorrect str result!"
         if mangled:
             mix_precedence(exp, expected)
