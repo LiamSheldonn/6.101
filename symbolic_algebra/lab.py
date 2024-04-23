@@ -105,6 +105,7 @@ class BinOp(Symbol):
     def __init__(self,left,right):
         true_vals = []
         for val in (left,right):
+            
             if issubclass(val.__class__, Symbol):
                 true_vals.append(val)
             elif isinstance(val,str):
@@ -112,6 +113,7 @@ class BinOp(Symbol):
             elif isinstance(val, int) or isinstance(val, float):
                 true_vals.append(Num(val))
             else:
+                print(type(val))
                 raise TypeError
         
         self.left, self.right = true_vals
@@ -141,16 +143,15 @@ class BinOp(Symbol):
             return False  
     
     def simplify(self):
-        left,right = self.left,self.right
+        left,right = self.left.simplify(),self.right.simplify()
         islnum = isinstance(left,Num)
         isrnum = isinstance(right,Num)
         if islnum and isrnum:
             return Num(self.eval_helper(left.n,right.n))
-            
+        else:
+            return self.simp_helper(left,right,islnum,isrnum)
 
 
-    
-    
 class Add(BinOp):
     operator = '+'
     precedence = 1
@@ -158,11 +159,15 @@ class Add(BinOp):
     def eval_helper(self,l,r):
         return l+r
     def deriv(self,var):
-        return Add(self.left.deriv(var),self.right.deriv(var))   
-    def simp_helper(self, islnum , isrnum):
-        if islnum:
-            if self.left == 0:
-                return 0
+        return Add(self.left.deriv(var),self.right.deriv(var)) 
+  
+    def simp_helper(self,left,right,islnum,isrnum):
+        if left == Num(0):
+            return right
+        elif right == Num(0):
+            return left
+        else:
+            return Add(left,right)
 
 
         
@@ -174,6 +179,11 @@ class Sub(BinOp):
         return l-r
     def deriv(self,var):
         return Sub(self.left.deriv(var),self.right.deriv(var))
+    def simp_helper(self,left,right,_,isrnum):
+        if right == Num(0):
+            return left
+        else:
+            return Sub(left,right)
 
 class Mul(BinOp):
     operator = '*'
@@ -183,6 +193,15 @@ class Mul(BinOp):
         return l*r
     def deriv(self,var):
         return Add(Mul(self.left,self.right.deriv(var)),Mul(self.right,self.left.deriv(var)))
+    def simp_helper(self,left,right,islnum,isrnum):
+        if left == Num(1):
+            return right
+        elif right == Num(1):
+            return left
+        elif left == Num(0) or right == Num(0):
+            return Num(0)
+        else:
+            return Mul(left,right)
 
 class Div(BinOp):
     operator = '/'
@@ -192,6 +211,18 @@ class Div(BinOp):
         return l/r
     def deriv(self,var):
         return Div(Sub(Mul(self.right,self.left.deriv(var)),Mul(self.left,self.right.deriv(var))),Mul(self.right,self.right))
+    def simp_helper(self,left,right,islnum,isrnum):
+        if left == Num(0):
+            return Num(0)
+        elif right == Num(1):
+            return left
+        else:
+            return Div(left,right)
+
+def expression(exp):
+    current_type = None
+    # for char in exp:
+    #     if char in {'(', ')'}:
 
 
 if __name__ == "__main__":
@@ -199,4 +230,4 @@ if __name__ == "__main__":
     x = Var('x')
     y = Var('y')
     z = 2*x - x*y + 3*y
-    print(z.deriv('x'))
+    print(z.deriv('y').simplify())
