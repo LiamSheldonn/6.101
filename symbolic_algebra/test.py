@@ -10,12 +10,32 @@ import ast
 import pytest
 import random
 import builtins
+import difflib
 
 ttype = type
 iisinstance = isinstance
 
 TEST_DIRECTORY = os.path.dirname(__file__)
 
+
+def show_string_difference(str1, str2):
+    # Generate the differences using ndiff from difflib
+    diff = list(difflib.ndiff(str1, str2))
+    
+    # Initialize a result string to accumulate the output
+    result = []
+    
+    # Loop through the diff output to format it nicely
+    for d in diff:
+        if d[0] == ' ':
+            continue  # Skip the elements that have not changed
+        elif d[0] == '-':
+            result.append(f"Delete '{d[2]}' from position {diff.index(d)}")
+        elif d[0] == '+':
+            result.append(f"Add '{d[2]}' to position {diff.index(d)}")
+    
+    # Join the result list into a single string for clearer output
+    return '\n'.join(result)
 
 def symbol_rep(x):
     """
@@ -233,6 +253,7 @@ def test_style_binop():
             assert (
                 e.type == AttributeError
             ), f"{name} has unexpected class attribute right {bin_class.right}"
+            print(set(dir(obj))-set(dir(bin_class)))
             assert (
                 len(dir(obj)) == len(dir(bin_class)) + 2
             ), f"{bin_class} should only have 2 instance attributes!"
