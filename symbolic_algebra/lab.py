@@ -65,6 +65,9 @@ class Var(Symbol):
     def deriv(self,var):
         return Num(1) if self.name == var else Num(0)
 
+    def simplify(self):
+        return self
+
 class Num(Symbol):
     def __init__(self, n):
         """
@@ -90,6 +93,9 @@ class Num(Symbol):
     
     def deriv(self,var):
         return Num(0)
+
+    def simplify(self):
+        return self
 
 def classname(val):
     return str(val.__class__.__name__)
@@ -134,6 +140,14 @@ class BinOp(Symbol):
         else:
             return False  
     
+    def simplify(self):
+        left,right = self.left,self.right
+        islnum = isinstance(left,Num)
+        isrnum = isinstance(right,Num)
+        if islnum and isrnum:
+            return Num(self.eval_helper(left.n,right.n))
+            
+
 
     
     
@@ -144,7 +158,14 @@ class Add(BinOp):
     def eval_helper(self,l,r):
         return l+r
     def deriv(self,var):
-        return Add(self.left.deriv(var),self.right.deriv(var))        
+        return Add(self.left.deriv(var),self.right.deriv(var))   
+    def simp_helper(self, islnum , isrnum):
+        if islnum:
+            if self.left == 0:
+                return 0
+
+
+        
 class Sub(BinOp):
     operator = '-'
     precedence = 1
