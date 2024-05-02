@@ -124,7 +124,6 @@ class BinOp(Symbol):
     def __init__(self, left, right):
         true_vals = []
         for val in (left, right):
-
             if issubclass(val.__class__, Symbol):
                 true_vals.append(val)
             elif isinstance(val, str):
@@ -132,7 +131,6 @@ class BinOp(Symbol):
             elif isinstance(val, (float,int)):
                 true_vals.append(Num(val))
             else:
-                print(type(val))
                 raise TypeError
 
         self.left, self.right = true_vals
@@ -355,7 +353,3 @@ def expression(exp):
 
 if __name__ == "__main__":
     doctest.testmod()
-    x = Var("x")
-    y = Var("y")
-    z = 2 * x - x * y + 3 * y
-    # print(z.deriv('y').simplify())
